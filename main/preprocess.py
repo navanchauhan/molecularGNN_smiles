@@ -108,13 +108,18 @@ def create_datasets(task, dataset, radius, device):
                          if '.' not in data.split()[0]]
 
         dataset = []
+        errored = 0
 
         for data in data_original:
 
             smiles, property = data.strip().split()
 
             """Create each data with the above defined functions."""
-            mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+            try:
+                mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+            except:
+                errored += 1
+                continue
             atoms = create_atoms(mol, atom_dict)
             molecular_size = len(atoms)
             i_jbond_dict = create_ijbonddict(mol, bond_dict)
@@ -133,7 +138,8 @@ def create_datasets(task, dataset, radius, device):
                 property = torch.FloatTensor([[float(property)]]).to(device)
 
             dataset.append((fingerprints, adjacency, molecular_size, property))
-
+        print("Total: %s" % str(len(data_original)))
+        print("Error: %s" % str(errored))
         return dataset
 
     dataset_train = create_dataset('data_train.txt')
